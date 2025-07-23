@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 contract P2PEscrow {
-    enum EscrowStatus { Created, Accepted, Completed, Refunded }
+    enum EscrowStatus { Created, Accepted, Funded, Delivered, Completed, Refunded }
 
     struct Escrow {
         address buyer;
@@ -19,6 +19,8 @@ contract P2PEscrow {
 
     event EscrowCreated(uint256 indexed escrowId, address indexed buyer, address indexed seller, uint256 amount);
     event EscrowAccepted(uint256 indexed escrowId, address indexed seller);
+    event EscrowFunded(uint256 indexed escrowId, address indexed buyer, uint256 amount);
+    event EscrowDelivered(uint256 indexed escrowId, address indexed seller);
     event EscrowCompleted(uint256 indexed escrowId, address indexed buyer);
     event EscrowRefunded(uint256 indexed escrowId, address indexed buyer);
 
@@ -39,10 +41,11 @@ contract P2PEscrow {
 
     function createEscrow(
         address _seller,
+        uint256 _amount,
         string memory _item,
         string memory _description
-    ) external payable returns (uint256) {
-        require(msg.value > 0, "Must send ETH");
+    ) external returns (uint256) {
+        require(_amount > 0, "Amount must be greater than 0");
         require(_seller != msg.sender, "Seller cannot be buyer");
         require(_seller != address(0), "Invalid seller address");
 
@@ -51,14 +54,14 @@ contract P2PEscrow {
         escrows[escrowId] = Escrow({
             buyer: msg.sender,
             seller: _seller,
-            amount: msg.value,
+            amount: _amount,
             item: _item,
             description: _description,
             status: EscrowStatus.Created,
             createdAt: block.timestamp
         });
 
-        emit EscrowCreated(escrowId, msg.sender, _seller, msg.value);
+        emit EscrowCreated(escrowId, msg.sender, _seller, _amount);
         return escrowId;
     }
 
@@ -73,12 +76,36 @@ contract P2PEscrow {
         emit EscrowAccepted(_escrowId, msg.sender);
     }
 
+    function fundEscrow(uint256 _escrowId)
+        external
+        payable
+        onlyBuyer(_escrowId)
+        validEscrow(_escrowId)
+    {
+        require(escrows[_escrowId].status == EscrowStatus.Accepted, "Escrow must be accepted first");
+        require(msg.value == escrows[_escrowId].amount, "Must send exact escrow amount");
+
+        escrows[_escrowId].status = EscrowStatus.Funded;
+        emit EscrowFunded(_escrowId, msg.sender, msg.value);
+    }
+
+    function markAsDelivered(uint256 _escrowId)
+        external
+        onlySeller(_escrowId)
+        validEscrow(_escrowId)
+    {
+        require(escrows[_escrowId].status == EscrowStatus.Funded, "Escrow must be funded first");
+
+        escrows[_escrowId].status = EscrowStatus.Delivered;
+        emit EscrowDelivered(_escrowId, msg.sender);
+    }
+
     function releaseFunds(uint256 _escrowId)
         external
         onlyBuyer(_escrowId)
         validEscrow(_escrowId)
     {
-        require(escrows[_escrowId].status == EscrowStatus.Accepted, "Escrow not accepted yet");
+        require(escrows[_escrowId].status == EscrowStatus.Delivered, "Item must be delivered first");
 
         escrows[_escrowId].status = EscrowStatus.Completed;
 
@@ -94,14 +121,21 @@ contract P2PEscrow {
         onlyBuyer(_escrowId)
         validEscrow(_escrowId)
     {
-        require(escrows[_escrowId].status == EscrowStatus.Created, "Cannot refund accepted escrow");
+        require(
+            escrows[_escrowId].status == EscrowStatus.Created ||
+            escrows[_escrowId].status == EscrowStatus.Funded,
+            "Cannot refund this escrow"
+        );
 
         escrows[_escrowId].status = EscrowStatus.Refunded;
 
-        address payable buyer = payable(escrows[_escrowId].buyer);
-        uint256 amount = escrows[_escrowId].amount;
+        // Only refund if escrow was funded
+        if (escrows[_escrowId].status == EscrowStatus.Funded) {
+            address payable buyer = payable(escrows[_escrowId].buyer);
+            uint256 amount = escrows[_escrowId].amount;
+            buyer.transfer(amount);
+        }
 
-        buyer.transfer(amount);
         emit EscrowRefunded(_escrowId, msg.sender);
     }
 

@@ -1,6 +1,6 @@
 // Contract deployed on Sepolia testnet
 export const P2P_ESCROW_CONTRACT = {
-  address: '0x2207Bab64eAF91daf61e3EB562E97E1a26be8f73' as `0x${string}`,
+  address: '0x603719DFc629f7D4F08aD5F927C42Cd7eE2714C7' as `0x${string}`,
   abi: [
     {
       'anonymous': false,
@@ -19,6 +19,31 @@ export const P2P_ESCROW_CONTRACT = {
         },
       ],
       'name': 'EscrowAccepted',
+      'type': 'event',
+    },
+    {
+      'anonymous': false,
+      'inputs': [
+        {
+          'indexed': true,
+          'internalType': 'uint256',
+          'name': 'escrowId',
+          'type': 'uint256',
+        },
+        {
+          'indexed': true,
+          'internalType': 'address',
+          'name': 'buyer',
+          'type': 'address',
+        },
+        {
+          'indexed': false,
+          'internalType': 'uint256',
+          'name': 'amount',
+          'type': 'uint256',
+        },
+      ],
+      'name': 'EscrowFunded',
       'type': 'event',
     },
     {
@@ -91,6 +116,25 @@ export const P2P_ESCROW_CONTRACT = {
       'type': 'event',
     },
     {
+      'anonymous': false,
+      'inputs': [
+        {
+          'indexed': true,
+          'internalType': 'uint256',
+          'name': 'escrowId',
+          'type': 'uint256',
+        },
+        {
+          'indexed': true,
+          'internalType': 'address',
+          'name': 'seller',
+          'type': 'address',
+        },
+      ],
+      'name': 'EscrowDelivered',
+      'type': 'event',
+    },
+    {
       'inputs': [
         {
           'internalType': 'uint256',
@@ -111,6 +155,11 @@ export const P2P_ESCROW_CONTRACT = {
           'type': 'address',
         },
         {
+          'internalType': 'uint256',
+          'name': '_amount',
+          'type': 'uint256',
+        },
+        {
           'internalType': 'string',
           'name': '_item',
           'type': 'string',
@@ -129,7 +178,7 @@ export const P2P_ESCROW_CONTRACT = {
           'type': 'uint256',
         },
       ],
-      'stateMutability': 'payable',
+      'stateMutability': 'nonpayable',
       'type': 'function',
     },
     {
@@ -192,6 +241,19 @@ export const P2P_ESCROW_CONTRACT = {
         },
       ],
       'stateMutability': 'view',
+      'type': 'function',
+    },
+    {
+      'inputs': [
+        {
+          'internalType': 'uint256',
+          'name': '_escrowId',
+          'type': 'uint256',
+        },
+      ],
+      'name': 'fundEscrow',
+      'outputs': [],
+      'stateMutability': 'payable',
       'type': 'function',
     },
     {
@@ -269,6 +331,19 @@ export const P2P_ESCROW_CONTRACT = {
       'stateMutability': 'nonpayable',
       'type': 'function',
     },
+    {
+      'inputs': [
+        {
+          'internalType': 'uint256',
+          'name': '_escrowId',
+          'type': 'uint256',
+        },
+      ],
+      'name': 'markAsDelivered',
+      'outputs': [],
+      'stateMutability': 'nonpayable',
+      'type': 'function',
+    },
   ],
 } as const;
 
@@ -276,8 +351,10 @@ export const P2P_ESCROW_CONTRACT = {
 export enum EscrowStatus {
   Created = 0,
   Accepted = 1,
-  Completed = 2,
-  Refunded = 3
+  Funded = 2,
+  Delivered = 3,
+  Completed = 4,
+  Refunded = 5
 }
 
 // Type definitions

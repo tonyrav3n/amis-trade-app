@@ -110,16 +110,18 @@ export default function CreateEscrowModal({
     });
 
     try {
-      // Call the smart contract to create escrow
+      // Call the smart contract to create escrow (no funding required)
       writeContract({
         address: P2P_ESCROW_CONTRACT.address,
         abi: P2P_ESCROW_CONTRACT.abi,
         functionName: 'createEscrow',
         args: [
           formData.sellerAddress as `0x${string}`,
+          parseEther(formData.amount),
           formData.item,
-          formData.description],
-        value: parseEther(formData.amount),
+          formData.description
+        ],
+        // No value needed - funding happens after seller accepts
       });
 
     } catch (err) {
@@ -197,7 +199,7 @@ export default function CreateEscrowModal({
       }
     };
     handleRedirect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isConfirmed, hash, wagmiReceipt]);
 
   // Handle transaction error

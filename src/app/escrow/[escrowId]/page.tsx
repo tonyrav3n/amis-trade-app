@@ -163,6 +163,21 @@ export default function EscrowPage() {
     });
   };
 
+  const handleFundEscrow = () => {
+    if (!isConnected || actualEscrowId === null || !mappedEscrowData) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    writeContract({
+      address: P2P_ESCROW_CONTRACT.address,
+      abi: P2P_ESCROW_CONTRACT.abi,
+      functionName: 'fundEscrow',
+      args: [BigInt(actualEscrowId)],
+      value: mappedEscrowData.amount,
+    });
+  };
+
   const handleReleaseFunds = () => {
     if (!isConnected || actualEscrowId === null) {
       toast.error('Please connect your wallet');
@@ -191,12 +206,30 @@ export default function EscrowPage() {
     });
   };
 
+  const handleMarkAsDelivered = () => {
+    if (!isConnected || actualEscrowId === null) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    writeContract({
+      address: P2P_ESCROW_CONTRACT.address,
+      abi: P2P_ESCROW_CONTRACT.abi,
+      functionName: 'markAsDelivered',
+      args: [BigInt(actualEscrowId)],
+    });
+  };
+
   const getStatusText = (status: EscrowStatus) => {
     switch (status) {
       case EscrowStatus.Created:
         return 'Created - Awaiting Seller';
       case EscrowStatus.Accepted:
-        return 'Accepted - Awaiting Delivery';
+        return 'Accepted - Awaiting Funding';
+      case EscrowStatus.Funded:
+        return 'Funded - Awaiting Delivery';
+      case EscrowStatus.Delivered:
+        return 'Delivered - Awaiting Release';
       case EscrowStatus.Completed:
         return 'Completed';
       case EscrowStatus.Refunded:
@@ -212,6 +245,10 @@ export default function EscrowPage() {
         return 'text-yellow-600 bg-yellow-100';
       case EscrowStatus.Accepted:
         return 'text-blue-600 bg-blue-100';
+      case EscrowStatus.Funded:
+        return 'text-purple-600 bg-purple-100';
+      case EscrowStatus.Delivered:
+        return 'text-orange-600 bg-orange-100';
       case EscrowStatus.Completed:
         return 'text-green-600 bg-green-100';
       case EscrowStatus.Refunded:
@@ -225,10 +262,18 @@ export default function EscrowPage() {
       typeof mappedEscrowData.seller === 'string' && address.toLowerCase() ===
       mappedEscrowData.seller.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Created;
-  const canRelease = mappedEscrowData && typeof address === 'string' &&
+  const canFund = mappedEscrowData && typeof address === 'string' &&
       typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Accepted;
+  const canMarkDelivered = mappedEscrowData && typeof address === 'string' &&
+      typeof mappedEscrowData.seller === 'string' && address.toLowerCase() ===
+      mappedEscrowData.seller.toLowerCase() && mappedEscrowData.status ===
+      EscrowStatus.Funded;
+  const canRelease = mappedEscrowData && typeof address === 'string' &&
+      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+      mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
+      EscrowStatus.Delivered;
   const canRefund = mappedEscrowData && typeof address === 'string' &&
       typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
@@ -361,6 +406,30 @@ export default function EscrowPage() {
                           </button>
                       )}
 
+                      {canFund && (
+                          <button
+                              onClick={handleFundEscrow}
+                              disabled={isPending || isConfirming}
+                              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-4 rounded-2xl transition-all disabled:opacity-50"
+                          >
+                            {isPending || isConfirming
+                                ? 'Processing...'
+                                : 'Fund Escrow'}
+                          </button>
+                      )}
+
+                      {canMarkDelivered && (
+                          <button
+                              onClick={handleMarkAsDelivered}
+                              disabled={isPending || isConfirming}
+                              className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-4 rounded-2xl transition-all disabled:opacity-50"
+                          >
+                            {isPending || isConfirming
+                                ? 'Processing...'
+                                : 'Mark as Delivered'}
+                          </button>
+                      )}
+
                       {canRelease && (
                           <button
                               onClick={handleReleaseFunds}
@@ -385,7 +454,7 @@ export default function EscrowPage() {
                           </button>
                       )}
 
-                      {!canAccept && !canRelease && !canRefund && (
+                      {!canAccept && !canFund && !canMarkDelivered && !canRelease && !canRefund && (
                           <div className="text-center text-gray-600">
                             <p>No actions available for your wallet address at
                               this time.</p>
