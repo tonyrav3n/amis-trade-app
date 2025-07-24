@@ -100,15 +100,16 @@ export default function EscrowPage() {
               data: log.data,
               topics: log.topics,
             });
-            if (decoded.eventName === 'EscrowCreated') {
-              setActualEscrowId(Number(decoded.args.escrowId));
+            if (decoded.eventName === 'EscrowCreated' && decoded.args) {
+              const args = decoded.args as { escrowId: bigint; buyer: string; seller: string; amount: bigint };
+              setActualEscrowId(Number(args.escrowId));
               break;
             }
-          } catch (_err) {
+          } catch {
             // ignore decoding errors for unrelated logs
           }
         }
-      } catch (error) {
+      } catch {
         toast.error('Failed to load escrow details');
       } finally {
         setIsLoadingTxData(false);
@@ -259,24 +260,24 @@ export default function EscrowPage() {
     }
   };
 
-  const canAccept = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.seller === 'string' && address.toLowerCase() ===
+  const canAccept = mappedEscrowData && address &&
+      mappedEscrowData.seller && address.toLowerCase() ===
       mappedEscrowData.seller.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Created;
-  const canFund = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+  const canFund = mappedEscrowData && address &&
+      mappedEscrowData.buyer && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Accepted;
-  const canMarkDelivered = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.seller === 'string' && address.toLowerCase() ===
+  const canMarkDelivered = mappedEscrowData && address &&
+      mappedEscrowData.seller && address.toLowerCase() ===
       mappedEscrowData.seller.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Funded;
-  const canRelease = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+  const canRelease = mappedEscrowData && address &&
+      mappedEscrowData.buyer && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Delivered;
-  const canRefund = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+  const canRefund = mappedEscrowData && address &&
+      mappedEscrowData.buyer && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Created;
 
@@ -475,7 +476,7 @@ export default function EscrowPage() {
                       rel="noopener noreferrer"
                       className="text-pink-500 hover:text-pink-600 text-sm font-mono break-all"
                   >
-                    {escrowId}
+                    {String(escrowId)}
                   </a>
                 </div>
               </>
