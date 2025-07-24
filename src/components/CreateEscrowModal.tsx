@@ -195,7 +195,7 @@ export default function CreateEscrowModal({
             toast.error(
                 'Could not find EscrowCreated event in transaction logs. The transaction may have failed or is not yet indexed. Check the browser console for log details.');
           }
-        } catch (_err) {
+        } catch {
           toast.error(
               'Failed to parse transaction receipt. Please check the transaction on Etherscan.');
         }
