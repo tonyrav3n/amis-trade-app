@@ -17,6 +17,7 @@ import {
 } from '@/lib/contract';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function EscrowPage() {
   const { escrowId } = useParams();
@@ -50,7 +51,7 @@ export default function EscrowPage() {
   }) as {
     data: EscrowData | undefined,
     isLoading: boolean,
-    error: any,
+    error: Error | null,
     refetch: () => void
   };
 
@@ -103,7 +104,7 @@ export default function EscrowPage() {
               setActualEscrowId(Number(decoded.args.escrowId));
               break;
             }
-          } catch (err) {
+          } catch (_err) {
             // ignore decoding errors for unrelated logs
           }
         }
@@ -303,9 +304,9 @@ export default function EscrowPage() {
               Found</h2>
             <p className="text-gray-600 mb-4">Could not find escrow details for
               this transaction.</p>
-            <a href="/" className="text-pink-500 hover:text-pink-600 underline">
+            <Link href="/" className="text-pink-500 hover:text-pink-600 underline">
               Return to Home
-            </a>
+            </Link>
           </div>
         </div>
     );
