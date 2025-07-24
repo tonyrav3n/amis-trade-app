@@ -17,6 +17,7 @@ import {
 } from '@/lib/contract';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function EscrowPage() {
   const { escrowId } = useParams();
@@ -50,7 +51,7 @@ export default function EscrowPage() {
   }) as {
     data: EscrowData | undefined,
     isLoading: boolean,
-    error: any,
+    error: Error | null,
     refetch: () => void
   };
 
@@ -64,7 +65,7 @@ export default function EscrowPage() {
       item: escrowData[3],
       description: escrowData[4],
       status: escrowData[5],
-      deadline: escrowData[6],
+      createdAt: escrowData[6],
     };
   }
 
@@ -99,15 +100,16 @@ export default function EscrowPage() {
               data: log.data,
               topics: log.topics,
             });
-            if (decoded.eventName === 'EscrowCreated') {
-              setActualEscrowId(Number(decoded.args.escrowId));
+            if (decoded.eventName === 'EscrowCreated' && decoded.args) {
+              const args = decoded.args as unknown as { escrowId: bigint; buyer: string; seller: string; amount: bigint };
+              setActualEscrowId(Number(args.escrowId));
               break;
             }
-          } catch (err) {
+          } catch {
             // ignore decoding errors for unrelated logs
           }
         }
-      } catch (error) {
+      } catch {
         toast.error('Failed to load escrow details');
       } finally {
         setIsLoadingTxData(false);
@@ -258,24 +260,24 @@ export default function EscrowPage() {
     }
   };
 
-  const canAccept = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.seller === 'string' && address.toLowerCase() ===
+  const canAccept = mappedEscrowData && address &&
+      mappedEscrowData.seller && address.toLowerCase() ===
       mappedEscrowData.seller.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Created;
-  const canFund = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+  const canFund = mappedEscrowData && address &&
+      mappedEscrowData.buyer && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Accepted;
-  const canMarkDelivered = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.seller === 'string' && address.toLowerCase() ===
+  const canMarkDelivered = mappedEscrowData && address &&
+      mappedEscrowData.seller && address.toLowerCase() ===
       mappedEscrowData.seller.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Funded;
-  const canRelease = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+  const canRelease = mappedEscrowData && address &&
+      mappedEscrowData.buyer && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Delivered;
-  const canRefund = mappedEscrowData && typeof address === 'string' &&
-      typeof mappedEscrowData.buyer === 'string' && address.toLowerCase() ===
+  const canRefund = mappedEscrowData && address &&
+      mappedEscrowData.buyer && address.toLowerCase() ===
       mappedEscrowData.buyer.toLowerCase() && mappedEscrowData.status ===
       EscrowStatus.Created;
 
@@ -303,9 +305,9 @@ export default function EscrowPage() {
               Found</h2>
             <p className="text-gray-600 mb-4">Could not find escrow details for
               this transaction.</p>
-            <a href="/" className="text-pink-500 hover:text-pink-600 underline">
+            <Link href="/" className="text-pink-500 hover:text-pink-600 underline">
               Return to Home
-            </a>
+            </Link>
           </div>
         </div>
     );
@@ -474,7 +476,7 @@ export default function EscrowPage() {
                       rel="noopener noreferrer"
                       className="text-pink-500 hover:text-pink-600 text-sm font-mono break-all"
                   >
-                    {escrowId}
+                    {String(escrowId)}
                   </a>
                 </div>
               </>

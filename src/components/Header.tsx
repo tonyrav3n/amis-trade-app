@@ -1,15 +1,16 @@
 'use client';
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Header() {
   return (
       <header className="flex justify-between items-center p-6">
-        <div className="flex items-center space-x-2">
-          <div
-              className="w-8 h-8 bg-pink-500 rounded-lg"/>
+        <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+          <div className="w-8 h-8 bg-pink-500 rounded-lg"/>
           <h1 className="text-xl font-bold text-gray-900">Amis Trade</h1>
-        </div>
+        </Link>
 
         {/* Custom Styled Connect Button */}
         <ConnectButton.Custom>
@@ -78,10 +79,11 @@ export default function Header() {
                                     }}
                                 >
                                   {chain.iconUrl && (
-                                      <img
+                                      <Image
                                           alt={chain.name ?? 'Chain icon'}
                                           src={chain.iconUrl}
-                                          style={{ width: 16, height: 16 }}
+                                          width={16}
+                                          height={16}
                                       />
                                   )}
                                 </div>
