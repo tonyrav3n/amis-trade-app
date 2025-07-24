@@ -101,7 +101,7 @@ export default function EscrowPage() {
               topics: log.topics,
             });
             if (decoded.eventName === 'EscrowCreated' && decoded.args) {
-              const args = decoded.args as { escrowId: bigint; buyer: string; seller: string; amount: bigint };
+              const args = decoded.args as unknown as { escrowId: bigint; buyer: string; seller: string; amount: bigint };
               setActualEscrowId(Number(args.escrowId));
               break;
             }
