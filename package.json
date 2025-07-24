@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@next/eslint-plugin-next": "^15.4.3",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@tanstack/react-query": "^5.83.0",
     "next": "15.4.2",
@@ -29,6 +30,7 @@
     "dotenv": "^17.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "hardhat": "^2.26.0",
     "tailwindcss": "^4",
     "typescript": "^5"

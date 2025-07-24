@@ -31,7 +31,7 @@ interface FormData {
 interface CreateEscrowModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: FormData) => void;
+  onSubmit: (transactionHash: string) => void;
 }
 
 export default function CreateEscrowModal({
@@ -177,17 +177,20 @@ export default function CreateEscrowModal({
                   topics: log.topics,
                 });
                 console.log('Decoded log:', decoded);
-                if (decoded.eventName === 'EscrowCreated') {
-                  escrowId = Number(decoded.args.escrowId);
+                if (decoded.eventName === 'EscrowCreated' && decoded.args) {
+                  const args = decoded.args as { escrowId: bigint; buyer: string; seller: string; amount: bigint };
+                  escrowId = Number(args.escrowId);
                   break;
                 }
-              } catch (err) {
-                console.error('Failed to decode log:', err, log);
+              } catch (error) {
+                console.error('Failed to decode log:', error, log);
               }
             }
           }
           if (escrowId !== null) {
-            window.location.href = `${window.location.origin}/escrow/${hash}`;
+            onSubmit(hash); // Use transaction hash instead of escrow ID
+            // Optionally, close the modal after creation
+            onClose();
           } else {
             toast.error(
                 'Could not find EscrowCreated event in transaction logs. The transaction may have failed or is not yet indexed. Check the browser console for log details.');
@@ -200,7 +203,7 @@ export default function CreateEscrowModal({
     };
     handleRedirect();
      
-  }, [isConfirmed, hash, wagmiReceipt]);
+  }, [isConfirmed, hash, wagmiReceipt, onSubmit, onClose]);
 
   // Handle transaction error
   React.useEffect(() => {
@@ -266,7 +269,7 @@ export default function CreateEscrowModal({
                       name="item"
                       value={formData.item}
                       onChange={handleInputChange}
-                      placeholder="Free Fire account"
+                      placeholder="Digital artwork, software license, domain name..."
                       className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all placeholder-gray-500"
                       required
                   />
@@ -282,7 +285,7 @@ export default function CreateEscrowModal({
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      placeholder="level 70, evo gun skins, etc"
+                      placeholder="Detailed description of the item, including specifications, condition, or terms..."
                       rows={3}
                       className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all resize-none placeholder-gray-500"
                       required
