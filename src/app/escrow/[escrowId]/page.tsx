@@ -65,7 +65,7 @@ export default function EscrowPage() {
       item: escrowData[3],
       description: escrowData[4],
       status: escrowData[5],
-      deadline: escrowData[6],
+      createdAt: escrowData[6],
     };
   }
 
