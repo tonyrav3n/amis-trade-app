@@ -112,7 +112,7 @@ The application is configured for deployment on:
 
 ## 🔗 Live Demo
 
-[Add your deployment URL here when deployed]
+- Not yet deployed
 
 ## 🤝 Contributing
 
